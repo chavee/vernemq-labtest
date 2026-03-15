@@ -1,4 +1,10 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: vernemq-redis
+    ports:
+      - "6380:6379"
+
   postgres:
     image: postgres:15
     container_name: vernemq-postgres
@@ -32,8 +38,8 @@ services:
       DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY: "on"
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS: "off"
 
-      # เปิดการใช้งาน Postgres Auth Plugin ที่มากับ VerneMQ โดยตรง
-      DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_POSTGRES__ENABLED: "on"
+      # ปิด built-in postgres auth เพราะใช้ custom Lua script แทน
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_POSTGRES__ENABLED: "off"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__HOST: "postgres"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__PORT: "5432"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__USER: "vernemq"
@@ -41,14 +47,14 @@ services:
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__DATABASE: "vernemq_db"
 
       # ไม่ต้องใช้ script ที่เขียนเองแล้ว เพราะเราจะใช้ของระบบ
-      # DOCKER_VERNEMQ_VMQ_DIVERSITY__SCRIPT_DIR: "/etc/vernemq/lua"
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__SCRIPT_DIR: "/etc/vernemq/lua"
 
       # Tuning for low latency & high throughput
       # - DOCKER_VERNEMQ_MAX_INFLIGHT_MESSAGES=0 # No limit
       # - DOCKER_VERNEMQ_MAX_ONLINE_MESSAGES=10000
       # - DOCKER_VERNEMQ_MAX_CLIENT_ID_SIZE=100
-    # volumes:
-    #  - ./lua:/etc/vernemq/lua
+    volumes:
+      - ./lua:/etc/vernemq/lua
     ulimits:
       nofile:
         soft: 65536

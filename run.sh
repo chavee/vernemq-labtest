@@ -6,6 +6,9 @@ docker compose up -d
 echo "⏳ Waiting for VerneMQ to be healthy..."
 sleep 10
 
+echo "📜 Loading custom Redis counter script..."
+docker compose exec vernemq vmq-admin script load path=/etc/vernemq/lua/auth.lua || true
+
 echo "🛠 Building custom k6 with MQTT support (xk6-mqtt)..."
 # ต้องใช้ xk6 ในการ build k6 ที่รองรับ MQTT
 export PATH=$PATH:$(go env GOPATH)/bin

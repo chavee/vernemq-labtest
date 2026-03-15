@@ -12,5 +12,5 @@ CREATE TABLE IF NOT EXISTS vmq_auth_acl (
 
 -- We use client_id = '*' which means it matches ANY client_id for this username
 INSERT INTO vmq_auth_acl (mountpoint, client_id, username, password, publish_acl, subscribe_acl)
-VALUES ('', '*', 'test-user', crypt('test-password', gen_salt('bf')), '[{"pattern": "#"}]', '[{"pattern": "#"}]')
+VALUES ('', '*', 'test-user', 'test-password', '[{"pattern": "#"}]', '[{"pattern": "#"}]')
 ON CONFLICT (mountpoint, client_id, username) DO NOTHING;
