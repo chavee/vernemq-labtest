@@ -1,33 +1,54 @@
 services:
+  postgres:
+    image: postgres:15
+    container_name: vernemq-postgres
+    environment:
+      POSTGRES_USER: vernemq
+      POSTGRES_PASSWORD: vernemq_password
+      POSTGRES_DB: vernemq_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vernemq -d vernemq_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   vernemq:
+    depends_on:
+      postgres:
+        condition: service_healthy
     image: vernemq/vernemq:latest
     container_name: vernemq-load-test
     ports:
       - "1883:1884" # MQTT over TCP
     environment:
-      - DOCKER_VERNEMQ_ACCEPT_EULA=yes
-      - DOCKER_VERNEMQ_LISTENER__TCP__DEFAULT=0.0.0.0:1884
+      DOCKER_VERNEMQ_ACCEPT_EULA: "yes"
+      DOCKER_VERNEMQ_LISTENER__TCP__DEFAULT: "0.0.0.0:1884"
 
       # --- LUA PLUGIN SETTINGS (vmq_diversity) ---
-      # เปิด/ปิด Plugin (เปลี่ยนเป็น 'off' เพื่อปิด)
-      - DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY=on
+      DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY: "on"
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: "off"
 
-      - DOCKER_VERNEMQ_ALLOW_ANONYMOUS=off
+      # เปิดการใช้งาน Postgres Auth Plugin ที่มากับ VerneMQ โดยตรง
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_POSTGRES__ENABLED: "on"
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__HOST: "postgres"
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__PORT: "5432"
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__USER: "vernemq"
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__PASSWORD: "vernemq_password"
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__DATABASE: "vernemq_db"
 
-      # ปิดไม่ให้มันพยายามต่อ DB/Redis ที่มากับ plugin เริ่มต้น (ป้องกัน Error)
-      # - DOCKER_VERNEMQ_VMQ_DIVERSITY__MYSQL__ENABLED=off
-      # - DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__ENABLED=off
-      # - DOCKER_VERNEMQ_VMQ_DIVERSITY__MONGODB__ENABLED=off
-      # - DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__ENABLED=off
-      # ชี้พาธไปที่ Lua script ของเรา
-      # - DOCKER_VERNEMQ_VMQ_DIVERSITY__SCRIPT_DIR=/etc/vernemq/lua
+      # ไม่ต้องใช้ script ที่เขียนเองแล้ว เพราะเราจะใช้ของระบบ
+      # DOCKER_VERNEMQ_VMQ_DIVERSITY__SCRIPT_DIR: "/etc/vernemq/lua"
 
       # Tuning for low latency & high throughput
       # - DOCKER_VERNEMQ_MAX_INFLIGHT_MESSAGES=0 # No limit
       # - DOCKER_VERNEMQ_MAX_ONLINE_MESSAGES=10000
       # - DOCKER_VERNEMQ_MAX_CLIENT_ID_SIZE=100
-    volumes:
-      - ./lua:/etc/vernemq/lua
+    # volumes:
+    #  - ./lua:/etc/vernemq/lua
     ulimits:
       nofile:
         soft: 65536

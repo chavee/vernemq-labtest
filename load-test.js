@@ -5,8 +5,8 @@ export const options = {
   scenarios: {
     mqtt_load: {
       executor: 'constant-vus',
-      vus: 500, // ลด VUs ลงก่อนเพื่อทดสอบว่าไม่โดน Kill
-      duration: '30s', // ระยะเวลาที่เทส
+      vus: 2000, // ทดสอบน้อยๆ ก่อน
+      duration: '15s', // ระยะเวลาที่เทส
     },
   },
 };
@@ -21,8 +21,8 @@ const closeTimeout = 2000;
 // สร้าง Client หนึ่งตัวต่อ VU (Virtual User) ในรอบ Init
 let client = new mqtt.Client(
     [host + ":" + port],
-    "",     // username (anonymous)
-    "",     // password
+    "test-user",     // username
+    "test-password", // password
     true,   // clean session
     clientId,
     connectTimeout
