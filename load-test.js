@@ -5,7 +5,7 @@ export const options = {
   scenarios: {
     mqtt_load: {
       executor: 'constant-vus',
-      vus: 500, // ทดสอบน้อยๆ ก่อน
+      vus: 2000, // ทดสอบน้อยๆ ก่อน
       duration: '10s', // ระยะเวลาที่เทส
     },
   },
