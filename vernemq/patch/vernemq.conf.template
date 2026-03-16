@@ -1,0 +1,34 @@
+## VerneMQ Base Configuration
+## Generated at startup: envsubst < vernemq.conf.template > vernemq.conf
+## Dynamic settings (listeners, TLS, plugins, Redis, Postgres) are
+## appended by docker-entrypoint.sh — do NOT add them here.
+
+allow_anonymous             = ${VMQ_ALLOW_ANONYMOUS}
+allow_register_during_netsplit = off
+coordinate_registrations    = on
+
+## Cluster listener (single-node)
+listener.vmq.clustering     = 0.0.0.0:44053
+
+## HTTP metrics
+listener.http.metrics       = 0.0.0.0:8888
+
+## HTTP publish API (vmq_http_pub)
+listener.http.pub           = 0.0.0.0:8090
+listener.http.pub.http_modules = vmq_http_pub
+http_module.vmq_http_pub.auth.mode = noauth
+plugins.vmq_http_pub        = on
+
+## Session / queue limits
+max_inflight_messages       = 20
+max_online_messages         = 1000
+max_offline_messages        = 1000
+max_message_size            = 0
+max_client_id_size          = 100
+
+## Shared subscription policy
+shared_subscription_policy  = prefer_local
+
+## Systree
+systree_enabled             = on
+systree_interval            = 20000

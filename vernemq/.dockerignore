@@ -1,0 +1,53 @@
+# Build artifacts
+_build/
+log/
+
+# Package artifacts
+*.deb
+*.rpm
+*.crashdump
+
+# Erlang/OTP
+plts/
+plts_base/
+
+# Generated config
+vars.generated
+vars/dev*_vars.config
+
+# Debian packaging
+debian/*
+
+# Git
+.git/
+.github/
+.gitignore
+.gitmodules
+.git-blame-ignore-revs
+
+# Editor & IDE
+.ropeproject/
+.idea/
+.DS_Store
+**/.DS_Store
+*~
+TAGS
+.editorconfig
+.tool-versions
+
+# Docker
+docker-compose.yml
+
+# Docs (not needed at build time)
+*.md
+LICENSE.txt
+THANKS
+
+# Data
+data/
+
+# Misc
+.make-function
+.DS_Store
+Makefile
+release.conf

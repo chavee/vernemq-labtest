@@ -18,7 +18,9 @@ redis.ensure_pool({
     host = "redis",
     port = 6379,
     database = 0,
-    password = ""
+    password = "",
+    size = 100,
+    max_overflow = 0
 })
 
 function auth_on_register(reg)
@@ -47,10 +49,7 @@ function auth_on_subscribe(sub)
 end
 
 function on_publish(pub)
-    -- นับจำนวน message ลงใน Redis key ชื่อ "mqtt_publish_count"
-    redis.execute("my_redis", "INCR", "mqtt_publish_count")
-
-    -- return true เพื่อบอกให้ VerneMQ ดำเนินการต่อ (อนุญาต publish)
+    redis.cmd("my_redis", "INCR mqtt_publish_count")
     return true
 end
 

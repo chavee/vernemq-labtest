@@ -1,0 +1,657 @@
+%% -*- mode: erlang -*-
+%% ex: ft=erlang
+
+%% @doc Enable to keep the Lua state between calls. This would allow to
+%% to set global variables and reuse them in a later callback call or
+%% even in a different callback. Default is 'off' enabling that no Lua
+%% garbage collection is triggered.
+%% Scripts can override this configuration by setting `keep_state = true`
+%% global variable in Lua script
+{mapping, "vmq_diversity.keep_state", "vmq_diversity.keep_state", [
+                                                                   {default, off},
+                                                                   {datatype, flag},
+                                                                   hidden
+                                                                  ]}.
+
+%% @doc Configures the number of parallel Lua states that are used for the
+%% same script. This can be useful for load balancing. Defaults to 1.
+%% Scripts can override this configuration by setting `num_states = 10`
+%% global variable in Lua script.
+{mapping, "vmq_diversity.nr_lua_states", "vmq_diversity.nr_lua_states", [
+                                                                         {default, 1},
+                                                                         {datatype, integer},
+                                                                         hidden
+                                                                        ]}.
+
+%% @doc Configure the vmq_diversity plugin script dir. The script dir
+%% is searched for Lua scripts which are automatically loaded when the
+%% plugin is enabled.
+{mapping, "vmq_diversity.script_dir", "vmq_diversity.script_dir", [
+                                                                   {default, "{{platform_share_dir}}/lua"},
+                                                                   {datatype, directory}
+                                                                  ]}.
+
+{mapping, "vmq_diversity.auth_postgres.enabled", "vmq_diversity.auth_cache.postgres.enabled",
+ [{datatype, flag},
+  {default, off}]}.
+{mapping, "vmq_diversity.auth_postgres.script", "vmq_diversity.auth_cache.postgres.file",
+ [{datatype, file},
+  {default, "{{platform_share_dir}}/lua/auth/postgres.lua"},
+  hidden
+ ]}.
+
+{mapping, "vmq_diversity.postgres.host", "vmq_diversity.db_config.postgres.host",
+ [{datatype, string},
+  {default, "localhost"},
+  {commented, "localhost"}]}.
+
+{mapping, "vmq_diversity.postgres.port", "vmq_diversity.db_config.postgres.port",
+ [{datatype, integer},
+  {default, 5432},
+  {commented, 5432}]}.
+
+{mapping, "vmq_diversity.postgres.user", "vmq_diversity.db_config.postgres.user",
+ [{datatype, string},
+  {default, "root"},
+  {commented, "root"}]}.
+
+{mapping, "vmq_diversity.postgres.password", "vmq_diversity.db_config.postgres.password",
+ [{datatype, string},
+  {default, "password"},
+  {commented, "password"}]}.
+
+{mapping, "vmq_diversity.postgres.database", "vmq_diversity.db_config.postgres.database",
+ [{datatype, string},
+  {default, "vernemq_db"},
+  {commented, "vernemq_db"}]}.
+
+{mapping, "vmq_diversity.postgres.pool_size", "vmq_diversity.db_config.postgres.pool_size",
+ [{datatype, integer},
+  {default, 5},
+  hidden]}.
+
+%% @doc Specify if the postgresql driver should use TLS or not.
+{mapping, "vmq_diversity.postgres.ssl", "vmq_diversity.db_config.postgres.ssl",
+ [{datatype, flag},
+  {default, off}
+ ]}.
+
+%% @doc The cafile is used to define the path to a file containing
+%% the PEM encoded CA certificates that are trusted.
+{mapping, "vmq_diversity.postgres.cafile", "vmq_diversity.db_config.postgres.cacertfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {commented, "{{platform_etc_dir}}/cafile.pem"},
+  {validators, ["file-exists", "file-is-readable"]}
+ ]}.
+
+%% @doc Set the path to the PEM encoded server certificate.
+{mapping, "vmq_diversity.postgres.certfile", "vmq_diversity.db_config.postgres.certfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {validators, ["file-exists", "file-is-readable"]},
+  {commented, "{{platform_etc_dir}}/cert.pem"}
+ ]}.
+
+%% @doc Set the path to the PEM encoded key file.
+{mapping, "vmq_diversity.postgres.keyfile", "vmq_diversity.db_config.postgres.keyfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {validators, ["file-exists", "file-is-readable"]},
+  {commented, "{{platform_etc_dir}}/keyfile.pem"}
+ ]}.
+
+%% @doc Setting the depth for CA chains
+{mapping, "vmq_diversity.postgres.ssl.depth", "vmq_diversity.db_config.postgres.depth", [
+                                                           {default, 3},
+                                                           {datatype, integer},
+                                                           hidden
+                                                          ]}.
+
+%% @doc Allow the plugin to open SSL connections to remote DB with wildcard certs
+{mapping, "vmq_diversity.postgres.ssl.customize_hostname_check", "vmq_diversity.db_config.postgres.customize_hostname_check", [
+                                                         {datatype, {enum, ['https']}},
+                                                            {default, 'https'},
+                                                            {commented, on}
+                                                        ]}.
+%% @doc Whether the client verifies the server cert or not.
+%% Use "verify_peer" in production.
+{mapping, "vmq_diversity.postgres.ssl.verify", "vmq_diversity.db_config.postgres.verify", [
+                                                                {default, 'verify_peer'},
+                                                                {datatype, {enum, ['verify_none', 
+                                                                            'verify_peer']}}
+                                                               ]}. 
+
+%% @doc Whether to use the System CAs (public_key:cacerts_get/0).
+%% Can be used as an alternative to provide a CAcertfile
+{mapping, "vmq_diversity.postgres.ssl.use_system_cas", "vmq_diversity.db_config.postgres.use_system_cas", [
+                                                                {default, on},
+                                                                {datatype, flag}
+                                                               ]}. 
+
+%% @doc The password hashing method to use in PostgreSQL:
+{mapping, "vmq_diversity.postgres.password_hash_method", "vmq_diversity.db_config.postgres.password_hash_method",
+ [{datatype, {enum, [crypt, bcrypt]}},
+  {default, crypt}
+ ]}.
+
+{mapping, "vmq_diversity.auth_cockroachdb.enabled", "vmq_diversity.auth_cache.cockroachdb.enabled",
+ [{datatype, flag},
+  {default, off}]}.
+
+{mapping, "vmq_diversity.auth_cockroachdb.script", "vmq_diversity.auth_cache.cockroachdb.file",
+ [{datatype, file},
+  {default, "{{platform_share_dir}}/lua/auth/cockroachdb.lua"},
+  hidden
+ ]}.
+
+{mapping, "vmq_diversity.cockroachdb.host", "vmq_diversity.db_config.cockroachdb.host",
+ [{datatype, string},
+  {default, "localhost"},
+  {commented, "localhost"}]}.
+
+{mapping, "vmq_diversity.cockroachdb.port", "vmq_diversity.db_config.cockroachdb.port",
+ [{datatype, integer},
+  {default, 5432},
+  {commented, 5432}]}.
+
+{mapping, "vmq_diversity.cockroachdb.user", "vmq_diversity.db_config.cockroachdb.user",
+ [{datatype, string},
+  {default, "root"},
+  {commented, "root"}]}.
+
+{mapping, "vmq_diversity.cockroachdb.password", "vmq_diversity.db_config.cockroachdb.password",
+ [{datatype, string},
+  {default, "password"},
+  {commented, "password"}]}.
+
+{mapping, "vmq_diversity.cockroachdb.database", "vmq_diversity.db_config.cockroachdb.database",
+ [{datatype, string},
+  {default, "vernemq_db"},
+  {commented, "vernemq_db"}]}.
+
+{mapping, "vmq_diversity.cockroachdb.pool_size", "vmq_diversity.db_config.cockroachdb.pool_size",
+ [{datatype, integer},
+  {default, 5},
+  hidden]}.
+
+%% @doc Specify if the cockroachdb driver should use TLS or not.
+{mapping, "vmq_diversity.cockroachdb.ssl", "vmq_diversity.db_config.cockroachdb.ssl",
+ [{datatype, flag},
+  {default, on}
+ ]}.
+
+%% @doc The cafile is used to define the path to a file containing
+%% the PEM encoded CA certificates that are trusted.
+{mapping, "vmq_diversity.cockroachdb.cafile", "vmq_diversity.db_config.cockroachdb.cacertfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {commented, "{{platform_etc_dir}}/cafile.pem"},
+  {validators, ["file-exists", "file-is-readable"]}
+ ]}.
+
+%% @doc Set the path to the PEM encoded server certificate.
+{mapping, "vmq_diversity.cockroachdb.certfile", "vmq_diversity.db_config.cockroachdb.certfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {validators, ["file-exists", "file-is-readable"]},
+  {commented, "{{platform_etc_dir}}/cert.pem"}
+ ]}.
+
+%% @doc Set the path to the PEM encoded key file.
+{mapping, "vmq_diversity.cockroachdb.keyfile", "vmq_diversity.db_config.cockroachdb.keyfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {validators, ["file-exists", "file-is-readable"]},
+  {commented, "{{platform_etc_dir}}/keyfile.pem"}
+ ]}.
+
+%% @doc Setting the depth for CA chains
+{mapping, "vmq_diversity.cockroachdb.ssl.depth", "vmq_diversity.db_config.cockroachdb.depth", [
+                                                           {default, 3},
+                                                           {datatype, integer},
+                                                           hidden
+                                                          ]}.
+
+%% @doc Allow the plugin to open SSL connections to remote DB with wildcard certs
+{mapping, "vmq_diversity.cockroachdb.ssl.customize_hostname_check", "vmq_diversity.db_config.cockroachdb.customize_hostname_check", [
+                                                         {datatype, {enum, ['https']}},
+                                                            {default, 'https'},
+                                                            {commented, on}
+                                                        ]}.
+%% @doc Whether the client verifies the server cert or not.
+%% Use "verify_peer" in production.
+{mapping, "vmq_diversity.cockroachdb.ssl.verify", "vmq_diversity.db_config.cockroachdb.verify", [
+                                                                {default, 'verify_peer'},
+                                                                {datatype, {enum, ['verify_none', 
+                                                                            'verify_peer']}}
+                                                               ]}. 
+
+%% @doc Whether to use the System CAs (public_key:cacerts_get/0).
+%% Can be used as an alternative to provide a CAcertfile
+{mapping, "vmq_diversity.cockroachdb.ssl.use_system_cas", "vmq_diversity.db_config.cockroachdb.use_system_cas", [
+                                                                {default, on},
+                                                                {datatype, flag}
+                                                               ]}. 
+%% @doc The password hashing method to use in CockroachDB:
+{mapping, "vmq_diversity.cockroachdb.password_hash_method", "vmq_diversity.db_config.cockroachdb.password_hash_method",
+ [{datatype, {enum, [sha256, bcrypt]}},
+  {default, bcrypt}
+ ]}.
+
+{mapping, "vmq_diversity.auth_mysql.enabled", "vmq_diversity.auth_cache.mysql.enabled",
+ [{datatype, flag},
+  {default, off}]}.
+{mapping, "vmq_diversity.auth_mysql.script", "vmq_diversity.auth_cache.mysql.file",
+ [{datatype, file},
+  {default, "{{platform_share_dir}}/lua/auth/mysql.lua"},
+  hidden
+ ]}.
+
+{mapping, "vmq_diversity.mysql.host", "vmq_diversity.db_config.mysql.host",
+ [{datatype, string},
+  {default, "localhost"},
+  {commented, "localhost"}]}.
+
+{mapping, "vmq_diversity.mysql.port", "vmq_diversity.db_config.mysql.port",
+ [{datatype, integer},
+  {default, 3306},
+  {commented, 3306}]}.
+
+{mapping, "vmq_diversity.mysql.user", "vmq_diversity.db_config.mysql.user",
+ [{datatype, string},
+  {default, "root"},
+  {commented, "root"}]}.
+
+{mapping, "vmq_diversity.mysql.password", "vmq_diversity.db_config.mysql.password",
+ [{datatype, string},
+  {default, "password"},
+  {commented, "password"}]}.
+
+{mapping, "vmq_diversity.mysql.database", "vmq_diversity.db_config.mysql.database",
+ [{datatype, string},
+  {default, "vernemq_db"},
+  {commented, "vernemq_db"}]}.
+
+{mapping, "vmq_diversity.mysql.pool_size", "vmq_diversity.db_config.mysql.pool_size",
+ [{datatype, integer},
+  {default, 5},
+  hidden]}.
+
+%% @doc The password hashing method to use in MySQL:
+%% password: Default for compatibility, deprecated since MySQL 5.7.6 and not
+%%           usable with MySQL 8.0.11+.
+%%           Docs: https://dev.mysql.com/doc/refman/5.7/en/encryption-functions.html#function_password
+%%      md5: Calculates an MD5 128-bit checksum of the password.
+%%           Docs: https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html#function_md5
+%%     sha1: Calculates the SHA-1 160-bit checksum for the password.
+%%           Docs: https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html#function_sha1
+%%   sha256: Calculates the SHA-2 hash of the password, using 256 bits.
+%%           Works only if MySQL has been configured with SSL support.
+%%           Docs: https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html#function_sha2
+{mapping, "vmq_diversity.mysql.password_hash_method", "vmq_diversity.db_config.mysql.password_hash_method",
+ [{datatype, {enum, [password, md5, sha1, sha256]}},
+  {default, password}
+ ]}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% MySQL 2 / MariaDB
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+{mapping, "vmq_diversity.auth_mysql2.enabled", "vmq_diversity.auth_cache.mysql2.enabled",
+ [{datatype, flag},
+  {default, off}]}.
+
+{mapping, "vmq_diversity.auth_mysql2.script", "vmq_diversity.auth_cache.mysql2.file",
+ [{datatype, file},
+  {default, "{{platform_share_dir}}/lua/auth/mysql2.lua"},
+  hidden
+ ]}.
+
+{mapping, "vmq_diversity.mysql2.host", "vmq_diversity.db_config.mysql2.host",
+ [{datatype, string},
+  {default, "localhost"},
+  {commented, "localhost"}]}.
+
+{mapping, "vmq_diversity.mysql2.port", "vmq_diversity.db_config.mysql2.port",
+ [{datatype, integer},
+  {default, 3306},
+  {commented, 3306}]}.
+
+{mapping, "vmq_diversity.mysql2.user", "vmq_diversity.db_config.mysql2.user",
+ [{datatype, string},
+  {default, "root"},
+  {commented, "root"}]}.
+
+{mapping, "vmq_diversity.mysql2.password", "vmq_diversity.db_config.mysql2.password",
+ [{datatype, string},
+  {default, "password"},
+  {commented, "password"}]}.
+
+{mapping, "vmq_diversity.mysql2.database", "vmq_diversity.db_config.mysql2.database",
+ [{datatype, string},
+  {default, "vernemq_db"},
+  {commented, "vernemq_db"}]}.
+
+{mapping, "vmq_diversity.mysql2.pool_size", "vmq_diversity.db_config.mysql2.pool_size",
+ [{datatype, integer},
+  {default, 5},
+  hidden]}.
+
+%% @doc Specify if the MySOL driver should use TLS or not.
+{mapping, "vmq_diversity.mysql2.ssl", "vmq_diversity.db_config.mysql2.ssl",
+ [{datatype, flag},
+  {default, off}
+ ]}.
+
+%% @doc The cafile is used to define the path to a file containing
+%% the PEM encoded CA certificates that are trusted.
+{mapping, "vmq_diversity.mysql2.cafile", "vmq_diversity.db_config.mysql2.cacertfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {commented, "{{platform_etc_dir}}/cafile.pem"},
+  {validators, ["file-exists", "file-is-readable"]}
+ ]}.
+
+%% @doc Set the path to the PEM encoded server certificate.
+{mapping, "vmq_diversity.mysql2.certfile", "vmq_diversity.db_config.mysql2.certfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {validators, ["file-exists", "file-is-readable"]},
+  {commented, "{{platform_etc_dir}}/cert.pem"}
+ ]}.
+
+%% @doc Set the path to the PEM encoded key file.
+{mapping, "vmq_diversity.mysql2.keyfile", "vmq_diversity.db_config.mysql2.keyfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {validators, ["file-exists", "file-is-readable"]},
+  {commented, "{{platform_etc_dir}}/keyfile.pem"}
+ ]}.
+%% @doc Setting the depth for CA chains
+{mapping, "vmq_diversity.mysql2.ssl.depth", "vmq_diversity.db_config.mysql2.depth", [
+                                                           {default, 3},
+                                                           {datatype, integer},
+                                                           hidden
+                                                          ]}.
+
+%% @doc Allow the plugin to open SSL connections to remote DB with wildcard certs
+{mapping, "vmq_diversity.mysql2.ssl.customize_hostname_check", "vmq_diversity.db_config.mysql2.customize_hostname_check", [
+                                                         {datatype, {enum, ['https']}},
+                                                            {default, 'https'},
+                                                            {commented, on}
+                                                        ]}.
+%% @doc Whether the client verifies the server cert or not.
+%% Use "verify_peer" in production.
+{mapping, "vmq_diversity.mysql2.ssl.verify", "vmq_diversity.db_config.mysql2.verify", [
+                                                                {default, 'verify_peer'},
+                                                                {datatype, {enum, ['verify_none',
+                                                                            'verify_peer']}}
+                                                               ]}.
+
+%% @doc Whether to use the System CAs (public_key:cacerts_get/0).
+%% Can be used as an alternative to provide a CAcertfile
+{mapping, "vmq_diversity.mysql2.ssl.use_system_cas", "vmq_diversity.db_config.mysql2.use_system_cas", [
+                                                                {default, on},
+                                                                {datatype, flag}
+                                                               ]}.
+
+%% @doc The password hashing method to use in MySQL:
+%% password: Default for compatibility, deprecated since MySQL 5.7.6 and not
+%%           usable with MySQL 8.0.11+.
+%%           Docs: https://dev.mysql.com/doc/refman/5.7/en/encryption-functions.html#function_password
+%%      md5: Calculates an MD5 128-bit checksum of the password.
+%%           Docs: https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html#function_md5
+%%     sha1: Calculates the SHA-1 160-bit checksum for the password.
+%%           Docs: https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html#function_sha1
+%%   sha256: Calculates the SHA-2 hash of the password, using 256 bits.
+%%           Works only if MySQL has been configured with SSL support.
+%%           Docs: https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html#function_sha2
+
+{mapping, "vmq_diversity.mysql2.password_hash_method", "vmq_diversity.db_config.mysql2.password_hash_method",
+ [{datatype, {enum, [password, md5, sha1, sha256]}},
+  {default, sha256}
+ ]}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% MongoDB
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+{mapping, "vmq_diversity.auth_mongodb.enabled", "vmq_diversity.auth_cache.mongodb.enabled",
+ [{datatype, flag},
+  {default, off}]}.
+{mapping, "vmq_diversity.auth_mongodb.script", "vmq_diversity.auth_cache.mongodb.file",
+ [{datatype, file},
+  {default, "{{platform_share_dir}}/lua/auth/mongodb.lua"},
+  hidden
+ ]}.
+
+{mapping, "vmq_diversity.mongodb.host", "vmq_diversity.db_config.mongodb.host",
+ [{datatype, string},
+  {default, "localhost"},
+  {commented, "localhost"}]}.
+
+{mapping, "vmq_diversity.mongodb.srv", "vmq_diversity.db_config.mongodb.srv",
+ [{datatype, string},
+  {default, ""},
+  hidden]}.
+
+{mapping, "vmq_diversity.mongodb.port", "vmq_diversity.db_config.mongodb.port",
+ [{datatype, integer},
+  {default, 27017},
+  {commented, 27017}]}.
+
+{mapping, "vmq_diversity.mongodb.login", "vmq_diversity.db_config.mongodb.login",
+ [{datatype, string},
+  {default, undefined},
+  {commented, ""}]}.
+
+{mapping, "vmq_diversity.mongodb.password", "vmq_diversity.db_config.mongodb.password",
+ [{datatype, string},
+  {default, undefined},
+  {commented, ""}]}.
+
+{mapping, "vmq_diversity.mongodb.auth_source", "vmq_diversity.db_config.mongodb.auth_source",
+[{datatype, string},
+ {default, "admin"},
+ {commented, ""}]}.
+
+{mapping, "vmq_diversity.mongodb.database", "vmq_diversity.db_config.mongodb.database",
+ [{datatype, string},
+  {default, undefined},
+  {commented, ""}]}.
+
+{mapping, "vmq_diversity.mongodb.pool_size", "vmq_diversity.db_config.mongodb.pool_size",
+ [{datatype, integer},
+  {default, 5},
+  hidden]}.
+
+{mapping, "vmq_diversity.mongodb.w_mode", "vmq_diversity.db_config.mongodb.w_mode",
+ [{datatype, atom},
+  {default, safe},
+  hidden]}.
+
+{mapping, "vmq_diversity.mongodb.read_preference", "vmq_diversity.db_config.mongodb.read_preference",
+ [{datatype, {enum, [primary, primaryPreferred, secondary, secondaryPreferred, nearest]}},
+  {default, primaryPreferred},
+  hidden
+ ]}.
+
+%% @doc Specify if the mongodb driver should use TLS or not.
+{mapping, "vmq_diversity.mongodb.ssl", "vmq_diversity.db_config.mongodb.ssl",
+ [{datatype, flag},
+  {default, off}
+ ]}.
+
+%% @doc The cafile is used to define the path to a file containing
+%% the PEM encoded CA certificates that are trusted.
+{mapping, "vmq_diversity.mongodb.cafile", "vmq_diversity.db_config.mongodb.cacertfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {commented, "{{platform_etc_dir}}/cafile.pem"},
+  {validators, ["file-exists", "file-is-readable"]}
+ ]}.
+
+%% @doc Set the path to the PEM encoded server certificate.
+{mapping, "vmq_diversity.mongodb.certfile", "vmq_diversity.db_config.mongodb.certfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {validators, ["file-exists", "file-is-readable"]},
+  {commented, "{{platform_etc_dir}}/cert.pem"}
+ ]}.
+
+%% @doc Set the path to the PEM encoded key file.
+{mapping, "vmq_diversity.mongodb.keyfile", "vmq_diversity.db_config.mongodb.keyfile",
+ [
+  {default, ""},
+  {datatype, file},
+  {validators, ["file-exists", "file-is-readable"]},
+  {commented, "{{platform_etc_dir}}/keyfile.pem"}
+ ]}.
+
+%% @doc Setting the depth for CA chains
+{mapping, "vmq_diversity.mongodb.ssl.depth", "vmq_diversity.db_config.mongodb.depth", [
+                                                           {default, 3},
+                                                           {datatype, integer},
+                                                           hidden
+                                                          ]}.
+
+%% @doc Server Name Indication
+{mapping, "vmq_diversity.mongodb.ssl.sni", "vmq_diversity.db_config.mongodb.sni", [
+                                                           {datatype, string},
+                                                           hidden
+                                                          ]}.
+
+%% @doc Allow the plugin to open SSL connections to remote DB with wildcard certs
+{mapping, "vmq_diversity.mongodb.ssl.customize_hostname_check", "vmq_diversity.db_config.mongodb.customize_hostname_check", [
+                                                         {datatype, {enum, ['https']}},
+                                                            {default, 'https'},
+                                                            {commented, on}
+                                                        ]}.
+%% @doc Whether the client verifies the server cert or not.
+%% Use "verify_peer" in production.
+{mapping, "vmq_diversity.mongodb.ssl.verify", "vmq_diversity.db_config.mongodb.verify", [
+                                                                {default, 'verify_peer'},
+                                                                {datatype, {enum, ['verify_none',
+                                                                            'verify_peer']}}
+                                                               ]}.
+
+%% @doc Whether to use the System CAs (public_key:cacerts_get/0).
+%% Can be used as an alternative to provide a CAcertfile
+{mapping, "vmq_diversity.mongodb.ssl.use_system_cas", "vmq_diversity.db_config.mongodb.use_system_cas", [
+                                                                {default, on},
+                                                                {datatype, flag}
+                                                               ]}.
+
+
+{mapping, "vmq_diversity.auth_redis.enabled", "vmq_diversity.auth_cache.redis.enabled",
+ [{datatype, flag},
+  {default, off}]}.
+{mapping, "vmq_diversity.auth_redis.script", "vmq_diversity.auth_cache.redis.file",
+ [{datatype, file},
+  {default, "{{platform_share_dir}}/lua/auth/redis.lua"},
+  hidden
+ ]}.
+
+{mapping, "vmq_diversity.redis.host", "vmq_diversity.db_config.redis.host",
+ [{datatype, string},
+  {default, "localhost"},
+  {commented, "localhost"}]}.
+
+{mapping, "vmq_diversity.redis.port", "vmq_diversity.db_config.redis.port",
+ [{datatype, integer},
+  {default, 6379},
+  {commented, 6379}]}.
+
+{mapping, "vmq_diversity.redis.password", "vmq_diversity.db_config.redis.password",
+ [{datatype, string},
+  {default, ""},
+  {commented, ""}]}.
+
+{mapping, "vmq_diversity.redis.user", "vmq_diversity.db_config.redis.user",
+ [{datatype, string},
+  {default, ""},
+  {commented, ""}]}.
+
+{mapping, "vmq_diversity.redis.database", "vmq_diversity.db_config.redis.database",
+ [{datatype, integer},
+  {default, 0},
+  {commented, 0}]}.
+
+{mapping, "vmq_diversity.redis.pool_size", "vmq_diversity.db_config.redis.pool_size",
+ [{datatype, integer},
+  {default, 5},
+  hidden]}.
+
+
+{mapping, "vmq_diversity.memcache.host", "vmq_diversity.db_config.memcache.host",
+ [{datatype, string},
+  {default, "localhost"},
+  {commented, "localhost"}]}.
+
+{mapping, "vmq_diversity.memcache.port", "vmq_diversity.db_config.memcache.port",
+ [{datatype, integer},
+  {default, 11211},
+  {commented, 11211}]}.
+
+%% @doc vmq_diversity.<name>.file = <file> loads a specific lua
+%% script when `vmq_diversity` starts. The scripts are loaded in the
+%% order defined by the names given, i.e., the script with <name>
+%% 'script1' is started before the plugin with <name> 'script2'.
+%%
+%%
+%% Scripts loaded like this are loaded after the scripts in the
+%% default script dir.
+%%
+{mapping, "vmq_diversity.$script.file", "vmq_diversity.user_scripts", [
+                                                                       {datatype, file},
+                                                                       {commented, "path/to/my/script.lua"},
+                                                                       {include_default, "script1"}
+                                                                      ]}.
+
+{translation,
+ "vmq_diversity.user_scripts",
+ fun(Conf) ->
+         ScriptNames =
+             proplists:get_all_values(
+               "$script",
+               cuttlefish_variable:fuzzy_matches(["vmq_diversity", "$script", "file"], Conf)),
+         Scripts =
+             [ {SortName, cuttlefish:conf_get("vmq_diversity." ++ SortName ++ ".file", Conf, undefined)}
+               || SortName <- ScriptNames ],
+         lists:keysort(1, Scripts)
+ end}.
+
+{mapping, "vmq_diversity.clique_lead_line", "vmq_diversity.clique_lead_line",
+ [{datatype, string},
+  hidden,
+  {default, "    script      Manage lua scripts\n"}]}.
+
+{validator, "file-exists", "file does not exist",
+ fun("") ->
+         %% "" is used as the default value in most places, we should
+         %% not error out because of that.
+         true;
+    (Name) -> vmq_schema_util:file_exists(Name)
+ end}.
+{validator, "file-is-readable", "file is not readable, check permissions",
+ fun("") ->
+         %% "" is used as the default value in most places, we should
+         %% not error out because of that.
+         true;
+    (Name) -> vmq_schema_util:file_is_readable(Name)
+ end}.
