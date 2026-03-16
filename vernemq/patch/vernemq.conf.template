@@ -3,7 +3,7 @@
 ## Dynamic settings (listeners, TLS, plugins, Redis, Postgres) are
 ## appended by docker-entrypoint.sh — do NOT add them here.
 
-allow_anonymous             = ${VMQ_ALLOW_ANONYMOUS}
+allow_anonymous             = ${ALLOW_ANONYMOUS}
 allow_register_during_netsplit = off
 coordinate_registrations    = on
 

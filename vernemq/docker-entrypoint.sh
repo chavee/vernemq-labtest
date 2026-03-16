@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+# Convert DOCKER_VERNEMQ_* to VMQ_* (for docker-compose compatibility)
+# This handles env vars from docker-compose that use DOCKER_VERNEMQ_ prefix
+for var in $(env | grep '^DOCKER_VERNEMQ_' | cut -d= -f1); do
+    vmq_var="${var#DOCKER_VERNEMQ_}"
+    # For DOCKER_VERNEMQ_* variables, just strip the DOCKER_VERNEMQ_ prefix
+    eval "export ${vmq_var}=\${${var}}"
+    [ "$var" = "DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY" ] && echo "DEBUG: Converting $var to $vmq_var = $(eval echo \$${vmq_var})"
+done
+
 # Set Erlang cookie — always use VMQ_DISTRIBUTED_COOKIE if provided,
 # otherwise fall back to existing file or default 'vmq'.
 if [ -n "${VMQ_DISTRIBUTED_COOKIE:-}" ]; then
@@ -55,8 +64,10 @@ fi
 TEMPLATE_FILE="/vernemq/etc/vernemq.conf.template"
 CONFIG_FILE="/vernemq/etc/vernemq.conf"
 
-export VMQ_ALLOW_ANONYMOUS="${VMQ_ALLOW_ANONYMOUS:-off}"
-export VMQ_LOG_CONSOLE_LEVEL="${VMQ_LOG_CONSOLE_LEVEL:-warning}"
+export ALLOW_ANONYMOUS="${ALLOW_ANONYMOUS:-off}"
+export LOG_CONSOLE_LEVEL="${LOG_CONSOLE_LEVEL:-warning}"
+export PLUGINS__VMQ_DIVERSITY="${PLUGINS__VMQ_DIVERSITY:-off}"
+export LISTENER__TCP__DEFAULT="${LISTENER__TCP__DEFAULT:-0.0.0.0:1883}"
 
 if [ -f "$TEMPLATE_FILE" ]; then
     envsubst < "$TEMPLATE_FILE" > "$CONFIG_FILE"
@@ -82,7 +93,7 @@ echo "" >> "$CONFIG_FILE"
 echo "########## Docker Generated Config ##########" >> "$CONFIG_FILE"
 
 # ── Logging ───────────────────────────────────────────────────────────────────
-echo "log.console.level = ${VMQ_LOG_CONSOLE_LEVEL}" >> "$CONFIG_FILE"
+echo "log.console.level = ${LOG_CONSOLE_LEVEL}" >> "$CONFIG_FILE"
 echo "" >> "$CONFIG_FILE"
 
 # ── Erlang distribution cookie ────────────────────────────────────────────────
@@ -94,7 +105,7 @@ echo "nodename = ${NODENAME}" >> "$CONFIG_FILE"
 echo "" >> "$CONFIG_FILE"
 
 # ── Plain TCP listener (mqtt / 1883) ──────────────────────────────────────────
-echo "listener.tcp.mqtt = 0.0.0.0:1883" >> "$CONFIG_FILE"
+echo "listener.tcp.mqtt = ${LISTENER__TCP__DEFAULT}" >> "$CONFIG_FILE"
 echo "" >> "$CONFIG_FILE"
 
 # ── WebSocket listeners ───────────────────────────────────────────────────────
@@ -103,41 +114,42 @@ echo "" >> "$CONFIG_FILE"
 
 # ── Plugins ───────────────────────────────────────────────────────────────────
 echo "plugins.vmq_passwd = off" >> "$CONFIG_FILE"
-echo "plugins.vmq_acl = ${VMQ_PLUGINS__VMQ_ACL:-off}" >> "$CONFIG_FILE"
+echo "plugins.vmq_acl = ${PLUGINS__VMQ_ACL:-off}" >> "$CONFIG_FILE"
 echo "" >> "$CONFIG_FILE"
 
 # ── Redis / vmq_diversity ────────────────────────────────────────────────────
-REDIS_HOST="${VMQ_DIVERSITY__REDIS__HOST:-}"
+REDIS_HOST="${DIVERSITY__REDIS__HOST:-}"
 if [ -n "$REDIS_HOST" ]; then
     echo "vmq_diversity.redis.host = ${REDIS_HOST}" >> "$CONFIG_FILE"
-    echo "vmq_diversity.redis.port = ${VMQ_DIVERSITY__REDIS__PORT:-6379}" >> "$CONFIG_FILE"
-    echo "vmq_diversity.redis.database = ${VMQ_DIVERSITY__REDIS__DATABASE:-0}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.redis.port = ${DIVERSITY__REDIS__PORT:-6379}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.redis.database = ${DIVERSITY__REDIS__DATABASE:-0}" >> "$CONFIG_FILE"
     # Only write password if provided (empty = no auth)
-    if [ -n "${VMQ_DIVERSITY__REDIS__PASSWORD:-}" ]; then
-        echo "vmq_diversity.redis.password = ${VMQ_DIVERSITY__REDIS__PASSWORD}" >> "$CONFIG_FILE"
+    if [ -n "${DIVERSITY__REDIS__PASSWORD:-}" ]; then
+        echo "vmq_diversity.redis.password = ${DIVERSITY__REDIS__PASSWORD}" >> "$CONFIG_FILE"
     fi
-    echo "vmq_diversity.redis.pool_size = ${VMQ_DIVERSITY__REDIS__POOL_SIZE:-5}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.redis.pool_size = ${DIVERSITY__REDIS__POOL_SIZE:-5}" >> "$CONFIG_FILE"
     echo "" >> "$CONFIG_FILE"
 fi
 
 # ── PostgreSQL / vmq_diversity auth ──────────────────────────────────────────
-if [ "${VMQ_PLUGINS__VMQ_DIVERSITY:-off}" = "on" ]; then
+echo "DEBUG: Before vmq_diversity config: PLUGINS__VMQ_DIVERSITY=${PLUGINS__VMQ_DIVERSITY:-off}"
+if [ "${PLUGINS__VMQ_DIVERSITY:-off}" = "on" ]; then
     echo "plugins.vmq_diversity = on" >> "$CONFIG_FILE"
-    echo "vmq_diversity.auth_postgres.enabled = ${VMQ_DIVERSITY__AUTH_POSTGRES__ENABLED:-off}" >> "$CONFIG_FILE"
-    echo "vmq_diversity.postgres.host = ${VMQ_DIVERSITY__POSTGRES__HOST:-localhost}" >> "$CONFIG_FILE"
-    echo "vmq_diversity.postgres.port = ${VMQ_DIVERSITY__POSTGRES__PORT:-5432}" >> "$CONFIG_FILE"
-    echo "vmq_diversity.postgres.user = ${VMQ_DIVERSITY__POSTGRES__USER:-postgres}" >> "$CONFIG_FILE"
-    echo "vmq_diversity.postgres.password = ${VMQ_DIVERSITY__POSTGRES__PASSWORD:-password}" >> "$CONFIG_FILE"
-    echo "vmq_diversity.postgres.database = ${VMQ_DIVERSITY__POSTGRES__DATABASE:-vernemq}" >> "$CONFIG_FILE"
-    # echo "vmq_diversity.postgres.password_hash_method = ${VMQ_DIVERSITY__POSTGRES__PASSWORD_HASH_METHOD:-crypt}" >> "$CONFIG_FILE"
-    echo "vmq_diversity.postgres.pool_size = ${VMQ_DIVERSITY__POSTGRES__POOL_SIZE:-5}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.auth_postgres.enabled = ${DIVERSITY__AUTH_POSTGRES__ENABLED:-off}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.postgres.host = ${DIVERSITY__POSTGRES__HOST:-localhost}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.postgres.port = ${DIVERSITY__POSTGRES__PORT:-5432}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.postgres.user = ${DIVERSITY__POSTGRES__USER:-postgres}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.postgres.password = ${DIVERSITY__POSTGRES__PASSWORD:-password}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.postgres.database = ${DIVERSITY__POSTGRES__DATABASE:-vernemq}" >> "$CONFIG_FILE"
+    # echo "vmq_diversity.postgres.password_hash_method = ${DIVERSITY__POSTGRES__PASSWORD_HASH_METHOD:-crypt}" >> "$CONFIG_FILE"
+    echo "vmq_diversity.postgres.pool_size = ${DIVERSITY__POSTGRES__POOL_SIZE:-5}" >> "$CONFIG_FILE"
     echo "" >> "$CONFIG_FILE"
 fi
 
 # ── TLS listeners (only if all three cert files are specified) ────────────────
-SSL_CAFILE="${VMQ_SSL_CAFILE:-}"
-SSL_CERTFILE="${VMQ_SSL_CERTFILE:-}"
-SSL_KEYFILE="${VMQ_SSL_KEYFILE:-}"
+SSL_CAFILE="${SSL_CAFILE:-}"
+SSL_CERTFILE="${SSL_CERTFILE:-}"
+SSL_KEYFILE="${SSL_KEYFILE:-}"
 
 if [ -n "$SSL_CAFILE" ] && [ -n "$SSL_CERTFILE" ] && [ -n "$SSL_KEYFILE" ]; then
 
@@ -228,6 +240,59 @@ fi
 if [ "$1" = "--background" ]; then
     /vernemq/bin/vernemq start
     echo "VerneMQ started in background."
+
+    # Auto-load Lua scripts from SCRIPT_DIR after VerneMQ starts
+    SCRIPT_DIR="${VMQ_DIVERSITY__SCRIPT_DIR:-}"
+    if [ -n "$SCRIPT_DIR" ] && [ -d "$SCRIPT_DIR" ]; then
+        (
+            until /vernemq/bin/vmq-admin cluster show >/dev/null 2>&1; do
+                sleep 1
+            done
+            echo "Loading Lua scripts from $SCRIPT_DIR..."
+            for script in "$SCRIPT_DIR"/*.lua; do
+                if [ -f "$script" ]; then
+                    echo "Loading: $(basename "$script")"
+                    /vernemq/bin/vmq-admin script load path="$script" || true
+                fi
+            done
+        ) &
+    fi
 else
-    exec /vernemq/bin/vernemq console -noshell -noinput
+    # For foreground mode, start in background and load scripts before running console
+    /vernemq/bin/vernemq start
+    echo "VerneMQ started in background mode"
+
+    # Auto-load Lua scripts from SCRIPT_DIR after VerneMQ starts
+    echo "DEBUG: VMQ_DIVERSITY__SCRIPT_DIR=${VMQ_DIVERSITY__SCRIPT_DIR}"
+    SCRIPT_DIR="${VMQ_DIVERSITY__SCRIPT_DIR:-}"
+    echo "DEBUG: SCRIPT_DIR=$SCRIPT_DIR"
+    if [ -n "$SCRIPT_DIR" ] && [ -d "$SCRIPT_DIR" ]; then
+        echo "DEBUG: Script directory exists, starting background loader..."
+        (
+            echo "Background loader started, waiting for VerneMQ to be ready..."
+            count=0
+            until /vernemq/bin/vmq-admin cluster show >/dev/null 2>&1; do
+                sleep 1
+                count=$((count+1))
+                if [ $count -gt 60 ]; then
+                    echo "ERROR: Timeout waiting for VerneMQ to be ready"
+                    exit 1
+                fi
+            done
+            echo "VerneMQ is ready. Loading Lua scripts from $SCRIPT_DIR..."
+            for script in "$SCRIPT_DIR"/*.lua; do
+                if [ -f "$script" ]; then
+                    echo "Loading: $(basename "$script")"
+                    /vernemq/bin/vmq-admin script load path="$script" || echo "ERROR: Failed to load $script"
+                fi
+            done
+            echo "Script loading complete"
+        ) &
+    else
+        echo "DEBUG: SCRIPT_DIR is empty or doesn't exist"
+    fi
+
+    # Keep container running - wait indefinitely for background processes
+    echo "Keeping container alive..."
+    while true; do sleep 86400; done
 fi
