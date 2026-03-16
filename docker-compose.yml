@@ -23,32 +23,19 @@ services:
       retries: 5
 
   vernemq-custom:
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-    #---- origin ----------------------------------------
-    # container_name: vernemq-loadtest-origin
-    # image: vernemq/vernemq:latest
-    #-----build เอง ---------------------------------------
     container_name: vernemq-custom
     build:
       context: ./vernemq
       dockerfile: Dockerfile
-    image: vernemq:buildori
-    #--------------------------------------------
+    image: vernemq:custom
 
     ports:
       - "1993:1883"
     environment:
       DOCKER_VERNEMQ_ACCEPT_EULA: "yes"
       DOCKER_VERNEMQ_LISTENER__TCP__DEFAULT: "0.0.0.0:1883"
-
-      # --- LUA PLUGIN SETTINGS (vmq_diversity) ---
       DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY: "on"
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS: "off"
-
-      # ปิด built-in postgres auth เพราะใช้ custom Lua script แทน
       DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_POSTGRES__ENABLED: "off"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__HOST: "postgres"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__PORT: "5432"
@@ -56,6 +43,10 @@ services:
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__PASSWORD: "vernemq_password"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__DATABASE: "vernemq_db"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__SCRIPT_DIR: "/etc/vernemq/lua"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
 
     volumes:
       - ./lua:/etc/vernemq/lua
@@ -71,34 +62,16 @@ services:
 
 
   vernemq-original:
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-    #---- origin ----------------------------------------
     container_name: vernemq-original
-    # deploy:
-    #   replicas: 0   # define ไว้ แต่ไม่ start
     image: vernemq/vernemq:latest
-    #-----build เอง ---------------------------------------
-    # container_name: vernemq-loadtest-selfbuild
-    # build:
-    #   context: ./vernemq
-    #   dockerfile: Dockerfile
-    # image: vernemq:buildori
-    #--------------------------------------------
 
     ports:
       - "1883:1883"
     environment:
       DOCKER_VERNEMQ_ACCEPT_EULA: "yes"
       DOCKER_VERNEMQ_LISTENER__TCP__DEFAULT: "0.0.0.0:1883"
-
-      # --- LUA PLUGIN SETTINGS (vmq_diversity) ---
       DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY: "on"
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS: "off"
-
-      # ปิด built-in postgres auth เพราะใช้ custom Lua script แทน
       DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_POSTGRES__ENABLED: "off"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__HOST: "postgres"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__PORT: "5432"
@@ -106,6 +79,10 @@ services:
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__PASSWORD: "vernemq_password"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__POSTGRES__DATABASE: "vernemq_db"
       DOCKER_VERNEMQ_VMQ_DIVERSITY__SCRIPT_DIR: "/etc/vernemq/lua"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
 
     volumes:
       - ./lua:/etc/vernemq/lua
